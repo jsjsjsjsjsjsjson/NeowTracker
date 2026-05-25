@@ -1,9 +1,3 @@
-# ModPlayerNeow
+# NeowTracker (W.I.P.)
 
-一个实现更优雅的新ModPlayer，来给我小时候写的那烂玩意结个尾...
-
-虽然这也谈不上有多优雅就是了，还没有完成，也许有朝一日会和Fami32粘在一起
-
-加油喵，我相信大概会越来越好的
-
- 
+A lightweight .mod tracker designed for low-resource devices
