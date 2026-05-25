@@ -6,28 +6,15 @@ project(ModPlayerNeow LANGUAGES C CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(PORTAUDIO REQUIRED portaudio-2.0)
-
 # include_directories(${PROJECT_SOURCE_DIR}/include)
 
-add_library(ThinMix
-    src/ThinMix/ThinMix.cpp
-    src/ThinMix/ThinMixPort_PortAudio.cpp
-)
+set(FAMIGFX_PORT sdl CACHE STRING "" FORCE)
 
-target_include_directories(ThinMix PUBLIC
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/ThinMix
-    ${PORTAUDIO_INCLUDE_DIRS}
-)
+add_subdirectory(src/ThinMix)
+add_subdirectory(src/Task)
+add_subdirectory(src/FamiGFX)
 
-target_link_libraries(ThinMix PUBLIC
-    ${PORTAUDIO_LIBRARIES}
-)
-
-target_compile_options(ThinMix PRIVATE -O3 -ffast-math)
-
-add_executable(ModPlayerNeow
+add_executable(NeowTracker
     src/binio_helper.c
     src/mod_helper.c
     src/LFO.cpp
@@ -37,6 +24,6 @@ add_executable(ModPlayerNeow
     src/main.cpp
 )
 
-target_compile_options(ModPlayerNeow PRIVATE -O3)
+target_compile_options(NeowTracker PRIVATE -O3)
 
-target_link_libraries(ModPlayerNeow ThinMix)
+target_link_libraries(NeowTracker ThinMix famigfx)
