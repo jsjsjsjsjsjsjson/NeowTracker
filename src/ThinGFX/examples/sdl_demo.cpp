@@ -1,4 +1,4 @@
-#include "famigfx/FamiGFX.hpp"
+#include "thingfx/ThinGFX.hpp"
 
 #include <chrono>
 #include <stdio.h>
@@ -19,10 +19,10 @@ static void demo_delay_ms(uint32_t ms)
 }
 
 typedef struct demo_window {
-    famigfx::Gui *gui;
+    thingfx::Gui *gui;
     const char *label;
-    famigfx::Color fill;
-    famigfx::Color accent;
+    thingfx::Color fill;
+    thingfx::Color accent;
     uint32_t frame;
     uint32_t key_hits;
     uint8_t inverted;
@@ -92,16 +92,16 @@ static uint8_t parse_title_visible(const char *text)
     return 1;
 }
 
-static void draw_panel(famigfx::Window &window, famigfx::FamiGFX &gfx,
-                       const famigfx::Rect &dirty, void *user)
+static void draw_panel(thingfx::Window &window, thingfx::ThinGFX &gfx,
+                       const thingfx::Rect &dirty, void *user)
 {
     demo_window_t *win = static_cast<demo_window_t *>(user);
     int16_t x;
     bool focused = win->gui && win->gui->focus().handle() == window.handle();
-    famigfx::Color fill = win->inverted ? 238 : win->fill;
-    famigfx::Color text = win->inverted ? 20
+    thingfx::Color fill = win->inverted ? 238 : win->fill;
+    thingfx::Color text = win->inverted ? 20
                                       : 255;
-    famigfx::Color accent = focused ? 185 : win->accent;
+    thingfx::Color accent = focused ? 185 : win->accent;
     (void)dirty;
 
     gfx.fillScreen(fill);
@@ -136,11 +136,11 @@ static void draw_panel(famigfx::Window &window, famigfx::FamiGFX &gfx,
                      focused ? 185 : 185);
 }
 
-static bool handle_panel_event(famigfx::Window &window, const famigfx::Event &event,
+static bool handle_panel_event(thingfx::Window &window, const thingfx::Event &event,
                                void *user)
 {
     demo_window_t *win = static_cast<demo_window_t *>(user);
-    if (event.type != famigfx::EventType::KeyDown) {
+    if (event.type != thingfx::EventType::KeyDown) {
         return false;
     }
 
@@ -167,7 +167,7 @@ static bool handle_panel_event(famigfx::Window &window, const famigfx::Event &ev
     case 'B':
         window.sendToBack();
         break;
-    case static_cast<uint32_t>(famigfx::Key::Enter):
+    case static_cast<uint32_t>(thingfx::Key::Enter):
     case ' ':
         win->inverted = win->inverted ? 0u : 1u;
         break;
@@ -187,24 +187,24 @@ int main(int argc, char **argv)
     uint8_t border_mode = argc > 4 ? parse_border_mode(argv[4]) : DEMO_BORDER_RECT;
     uint8_t show_title = argc > 5 ? parse_title_visible(argv[5]) : 1;
     uint32_t frames = 0;
-    famigfx::PortConfig port_config;
-    port_config.title = "FamiGFX SDL Demo";
+    thingfx::PortConfig port_config;
+    port_config.title = "ThinGFX SDL Demo";
     port_config.scale = 2;
-    port_config.format = famigfx::PixelFormat::Gray8;
+    port_config.format = thingfx::PixelFormat::Gray8;
     port_config.autoStartDaemon = true;
-    famigfx::Gui gui(width, height, port_config);
-    famigfx::Window main_win;
-    famigfx::Window floating_win;
-    famigfx::WindowConfig config;
-    famigfx::WindowBorder border =
-        border_mode == DEMO_BORDER_NONE ? famigfx::WindowBorder::None
-                                        : famigfx::WindowBorder::Rect;
+    thingfx::Gui gui(width, height, port_config);
+    thingfx::Window main_win;
+    thingfx::Window floating_win;
+    thingfx::WindowConfig config;
+    thingfx::WindowBorder border =
+        border_mode == DEMO_BORDER_NONE ? thingfx::WindowBorder::None
+                                        : thingfx::WindowBorder::Rect;
     demo_window_t main_data;
     demo_window_t float_data;
     uint32_t last_ticks;
 
     if (!gui.portValid()) {
-        fprintf(stderr, "failed to create selected FamiGFX port\n");
+        fprintf(stderr, "failed to create selected ThinGFX port\n");
         return 1;
     }
     if (gui.port() && !gui.port()->hasSystemBorder()) {
@@ -225,7 +225,7 @@ int main(int argc, char **argv)
     main_data.key_hits = 0;
     main_data.inverted = 0;
 
-    config.kind = famigfx::NodeKind::Window;
+    config.kind = thingfx::NodeKind::Window;
     config.frame = {16, 16, (int16_t)(width - 32), (int16_t)(height - 32)};
     config.opacity = 255;
     config.visible = true;
@@ -250,7 +250,7 @@ int main(int argc, char **argv)
     float_data.key_hits = 0;
     float_data.inverted = 0;
 
-    config.kind = famigfx::NodeKind::Floating;
+    config.kind = thingfx::NodeKind::Floating;
     config.frame = {(int16_t)(width / 2 - 32), (int16_t)(height / 2 - 28), 128, 76};
     config.opacity = 230;
     config.visible = true;
@@ -272,7 +272,7 @@ int main(int argc, char **argv)
     while (gui.pump()) {
         uint32_t now = demo_ticks_ms();
         uint32_t dt = now - last_ticks;
-        famigfx::Rect rect;
+        thingfx::Rect rect;
         int16_t range;
         last_ticks = now;
 

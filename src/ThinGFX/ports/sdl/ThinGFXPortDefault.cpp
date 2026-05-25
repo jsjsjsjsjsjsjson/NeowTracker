@@ -1,11 +1,13 @@
-#include "../../src/FamiGFXInternal.hpp"
+#include "../../src/ThinGFXInternal.hpp"
 
 #include <SDL.h>
 #include <pthread.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
+#include <time.h>
 
-namespace famigfx {
+namespace thingfx {
 using namespace detail;
 
 class SDLDefaultPort : public Port {
@@ -34,7 +36,7 @@ public:
     {
         uint8_t scale = config.scale ? config.scale : 1;
         PixelFormat format = config.format;
-        const char *title = config.title ? config.title : "FamiGFX";
+        const char *title = config.title ? config.title : "ThinGFX";
         if (width == 0 || height == 0 || !supportedFormat(format)) return;
         if (SDL_Init(SDL_INIT_VIDEO) != 0) return;
 
@@ -71,7 +73,7 @@ public:
         }
         if (!state_->window || !state_->renderer || !state_->texture) return;
 
-        fgfx_canvas_wrap(&target, width, height, strideFor(width, format),
+        tgfx_canvas_wrap(&target, width, height, strideFor(width, format),
                          format, state_->target_pixels);
     }
 
@@ -132,7 +134,7 @@ public:
 
         /*
          * SDL rendering APIs are most reliable when called from the thread
-         * that owns the event loop.  The FamiGFX daemon may run on a worker
+         * that owns the event loop.  The ThinGFX daemon may run on a worker
          * thread, so here we only convert the submitted canvas into an ARGB
          * staging buffer.  pump() performs the actual SDL_UpdateTexture /
          * SDL_RenderPresent on the application thread.
@@ -140,7 +142,7 @@ public:
         pthread_mutex_lock(&state_->mutex);
         for (uint16_t y = 0; y < canvas.height; ++y) {
             for (uint16_t x = 0; x < canvas.width; ++x) {
-                uint8_t g = fgfx_get_pixel(&canvas, static_cast<int16_t>(x), static_cast<int16_t>(y));
+                uint8_t g = tgfx_get_pixel(&canvas, static_cast<int16_t>(x), static_cast<int16_t>(y));
                 state_->scratch[static_cast<size_t>(y) * canvas.width + x] =
                     0xFF000000u | (static_cast<uint32_t>(g) << 16) |
                     (static_cast<uint32_t>(g) << 8) | g;
@@ -192,6 +194,33 @@ public:
         pthread_mutex_lock(&state_->mutex);
         while (!state_->pending_commit && !state_->daemon_stop) {
             pthread_cond_wait(&state_->cond, &state_->mutex);
+        }
+        if (state_->daemon_stop) {
+            pthread_mutex_unlock(&state_->mutex);
+            return false;
+        }
+        state_->pending_commit = false;
+        pthread_mutex_unlock(&state_->mutex);
+        return true;
+    }
+
+    bool waitCommitTimeout(uint32_t timeoutMs) override
+    {
+        if (!state_) return false;
+        struct timespec ts;
+        clock_gettime(CLOCK_REALTIME, &ts);
+        ts.tv_sec += timeoutMs / 1000u;
+        ts.tv_nsec += static_cast<long>((timeoutMs % 1000u) * 1000000u);
+        if (ts.tv_nsec >= 1000000000L) {
+            ts.tv_sec += 1;
+            ts.tv_nsec -= 1000000000L;
+        }
+        pthread_mutex_lock(&state_->mutex);
+        while (!state_->pending_commit && !state_->daemon_stop) {
+            int rc = pthread_cond_timedwait(&state_->cond, &state_->mutex, &ts);
+            if (rc == ETIMEDOUT) {
+                break;
+            }
         }
         if (state_->daemon_stop) {
             pthread_mutex_unlock(&state_->mutex);
@@ -322,4 +351,4 @@ void destroyDefaultPort(Port *port)
     delete port;
 }
 
-} // namespace famigfx
+} // namespace thingfx

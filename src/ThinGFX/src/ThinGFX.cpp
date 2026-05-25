@@ -1,11 +1,11 @@
-#include "famigfx/FamiGFX.hpp"
-#include "FamiGFXInternal.hpp"
+#include "thingfx/ThinGFX.hpp"
+#include "ThinGFXInternal.hpp"
 
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 
-namespace famigfx {
+namespace thingfx {
 using namespace detail;
 
 Port::Port()
@@ -21,7 +21,7 @@ Port::Port()
     target.clip_h = 0;
 }
 
-#if !defined(FAMIGFX_HAS_DEFAULT_PORT)
+#if !defined(THINGFX_HAS_DEFAULT_PORT)
 Port *createDefaultPort(uint16_t width, uint16_t height, const PortConfig &config)
 {
     (void)width;
@@ -37,9 +37,9 @@ void destroyDefaultPort(Port *port)
 #endif
 
 
-static fgfx_color_t invert_color(fgfx_color_t c)
+static tgfx_color_t invert_color(tgfx_color_t c)
 {
-    return static_cast<fgfx_color_t>(255u - c);
+    return static_cast<tgfx_color_t>(255u - c);
 }
 
 size_t Print::write(const char *text)
@@ -155,7 +155,7 @@ size_t Print::printf(const char *format, ...)
     return written;
 }
 
-FamiGFX::FamiGFX(fgfx_canvas_t *canvas)
+ThinGFX::ThinGFX(tgfx_canvas_t *canvas)
     : canvas_(0),
       raw_width_(0),
       raw_height_(0),
@@ -176,7 +176,7 @@ FamiGFX::FamiGFX(fgfx_canvas_t *canvas)
     setCanvas(canvas);
 }
 
-void FamiGFX::setCanvas(fgfx_canvas_t *canvas)
+void ThinGFX::setCanvas(tgfx_canvas_t *canvas)
 {
     canvas_ = canvas;
     raw_width_ = canvas ? static_cast<int16_t>(canvas->width) : 0;
@@ -184,45 +184,45 @@ void FamiGFX::setCanvas(fgfx_canvas_t *canvas)
     setRotation(rotation_);
 }
 
-bool FamiGFX::resetClip()
+bool ThinGFX::resetClip()
 {
     if (!canvas_) {
         return false;
     }
-    fgfx_canvas_reset_clip(canvas_);
+    tgfx_canvas_reset_clip(canvas_);
     return true;
 }
 
-bool FamiGFX::setClip(const Rect &rect)
+bool ThinGFX::setClip(const Rect &rect)
 {
-    fgfx_rect_t native;
+    tgfx_rect_t native;
     native.x = rect.x;
     native.y = rect.y;
     native.w = rect.w;
     native.h = rect.h;
-    return canvas_ && fgfx_canvas_set_clip(canvas_, native) == FGFX_OK;
+    return canvas_ && tgfx_canvas_set_clip(canvas_, native) == TGFX_OK;
 }
 
-bool FamiGFX::intersectClip(const Rect &rect)
+bool ThinGFX::intersectClip(const Rect &rect)
 {
-    fgfx_rect_t native;
+    tgfx_rect_t native;
     native.x = rect.x;
     native.y = rect.y;
     native.w = rect.w;
     native.h = rect.h;
-    return canvas_ && fgfx_canvas_intersect_clip(canvas_, native) == FGFX_OK;
+    return canvas_ && tgfx_canvas_intersect_clip(canvas_, native) == TGFX_OK;
 }
 
-Rect FamiGFX::clip() const
+Rect ThinGFX::clip() const
 {
-    fgfx_rect_t native;
+    tgfx_rect_t native;
     Rect out;
     native.x = 0;
     native.y = 0;
     native.w = 0;
     native.h = 0;
     if (canvas_) {
-        fgfx_canvas_get_clip(canvas_, &native);
+        tgfx_canvas_get_clip(canvas_, &native);
     }
     out.x = native.x;
     out.y = native.y;
@@ -231,7 +231,7 @@ Rect FamiGFX::clip() const
     return out;
 }
 
-void FamiGFX::setRotation(uint8_t rotation)
+void ThinGFX::setRotation(uint8_t rotation)
 {
     rotation_ = rotation & 3u;
     if (rotation_ & 1u) {
@@ -243,7 +243,7 @@ void FamiGFX::setRotation(uint8_t rotation)
     }
 }
 
-void FamiGFX::drawPixel(int16_t x, int16_t y, fgfx_color_t color)
+void ThinGFX::drawPixel(int16_t x, int16_t y, tgfx_color_t color)
 {
     if (!canvas_) {
         return;
@@ -275,10 +275,10 @@ void FamiGFX::drawPixel(int16_t x, int16_t y, fgfx_color_t color)
         break;
     }
 
-    fgfx_draw_pixel(canvas_, x, y, inverted_ ? invert_color(color) : color);
+    tgfx_draw_pixel(canvas_, x, y, inverted_ ? invert_color(color) : color);
 }
 
-fgfx_color_t FamiGFX::getPixel(int16_t x, int16_t y) const
+tgfx_color_t ThinGFX::getPixel(int16_t x, int16_t y) const
 {
     if (!canvas_) {
         return 0;
@@ -286,40 +286,40 @@ fgfx_color_t FamiGFX::getPixel(int16_t x, int16_t y) const
     if (x < 0 || y < 0 || x >= width_ || y >= height_) {
         return 0;
     }
-    return fgfx_get_pixel(canvas_, x, y);
+    return tgfx_get_pixel(canvas_, x, y);
 }
 
-void FamiGFX::writePixel(int16_t x, int16_t y, fgfx_color_t color)
+void ThinGFX::writePixel(int16_t x, int16_t y, tgfx_color_t color)
 {
     drawPixel(x, y, color);
 }
 
-void FamiGFX::writeFillRect(int16_t x, int16_t y, int16_t w, int16_t h,
-                            fgfx_color_t color)
+void ThinGFX::writeFillRect(int16_t x, int16_t y, int16_t w, int16_t h,
+                            tgfx_color_t color)
 {
     fillRect(x, y, w, h, color);
 }
 
-void FamiGFX::writeFastVLine(int16_t x, int16_t y, int16_t h, fgfx_color_t color)
+void ThinGFX::writeFastVLine(int16_t x, int16_t y, int16_t h, tgfx_color_t color)
 {
     drawFastVLine(x, y, h, color);
 }
 
-void FamiGFX::writeFastHLine(int16_t x, int16_t y, int16_t w, fgfx_color_t color)
+void ThinGFX::writeFastHLine(int16_t x, int16_t y, int16_t w, tgfx_color_t color)
 {
     drawFastHLine(x, y, w, color);
 }
 
-void FamiGFX::writeLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1,
-                        fgfx_color_t color)
+void ThinGFX::writeLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1,
+                        tgfx_color_t color)
 {
     drawLine(x0, y0, x1, y1, color);
 }
 
-void FamiGFX::drawFastHLine(int16_t x, int16_t y, int16_t w, fgfx_color_t color)
+void ThinGFX::drawFastHLine(int16_t x, int16_t y, int16_t w, tgfx_color_t color)
 {
     if (rotation_ == 0 && canvas_ && !inverted_) {
-        fgfx_fill_rect(canvas_, x, y, w, 1, color);
+        tgfx_fill_rect(canvas_, x, y, w, 1, color);
         return;
     }
     for (int16_t i = 0; i < w; ++i) {
@@ -327,10 +327,10 @@ void FamiGFX::drawFastHLine(int16_t x, int16_t y, int16_t w, fgfx_color_t color)
     }
 }
 
-void FamiGFX::drawFastVLine(int16_t x, int16_t y, int16_t h, fgfx_color_t color)
+void ThinGFX::drawFastVLine(int16_t x, int16_t y, int16_t h, tgfx_color_t color)
 {
     if (rotation_ == 0 && canvas_ && !inverted_) {
-        fgfx_fill_rect(canvas_, x, y, 1, h, color);
+        tgfx_fill_rect(canvas_, x, y, 1, h, color);
         return;
     }
     for (int16_t i = 0; i < h; ++i) {
@@ -338,11 +338,11 @@ void FamiGFX::drawFastVLine(int16_t x, int16_t y, int16_t h, fgfx_color_t color)
     }
 }
 
-void FamiGFX::fillRect(int16_t x, int16_t y, int16_t w, int16_t h,
-                       fgfx_color_t color)
+void ThinGFX::fillRect(int16_t x, int16_t y, int16_t w, int16_t h,
+                       tgfx_color_t color)
 {
     if (rotation_ == 0 && canvas_ && !inverted_) {
-        fgfx_fill_rect(canvas_, x, y, w, h, color);
+        tgfx_fill_rect(canvas_, x, y, w, h, color);
         return;
     }
     for (int16_t iy = 0; iy < h; ++iy) {
@@ -350,17 +350,17 @@ void FamiGFX::fillRect(int16_t x, int16_t y, int16_t w, int16_t h,
     }
 }
 
-void FamiGFX::fillScreen(fgfx_color_t color)
+void ThinGFX::fillScreen(tgfx_color_t color)
 {
     if (rotation_ == 0 && canvas_ && !inverted_) {
-        fgfx_clear(canvas_, color);
+        tgfx_clear(canvas_, color);
         return;
     }
     fillRect(0, 0, width_, height_, color);
 }
 
-void FamiGFX::drawLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1,
-                       fgfx_color_t color)
+void ThinGFX::drawLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1,
+                       tgfx_color_t color)
 {
     int16_t dx = static_cast<int16_t>(x1 > x0 ? x1 - x0 : x0 - x1);
     int16_t sx = x0 < x1 ? 1 : -1;
@@ -385,8 +385,8 @@ void FamiGFX::drawLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1,
     }
 }
 
-void FamiGFX::drawRect(int16_t x, int16_t y, int16_t w, int16_t h,
-                       fgfx_color_t color)
+void ThinGFX::drawRect(int16_t x, int16_t y, int16_t w, int16_t h,
+                       tgfx_color_t color)
 {
     drawFastHLine(x, y, w, color);
     drawFastHLine(x, static_cast<int16_t>(y + h - 1), w, color);
@@ -394,10 +394,10 @@ void FamiGFX::drawRect(int16_t x, int16_t y, int16_t w, int16_t h,
     drawFastVLine(static_cast<int16_t>(x + w - 1), y, h, color);
 }
 
-void FamiGFX::drawCircle(int16_t x0, int16_t y0, int16_t r, fgfx_color_t color)
+void ThinGFX::drawCircle(int16_t x0, int16_t y0, int16_t r, tgfx_color_t color)
 {
     if (rotation_ == 0 && canvas_ && !inverted_) {
-        fgfx_draw_circle(canvas_, x0, y0, r, color);
+        tgfx_draw_circle(canvas_, x0, y0, r, color);
         return;
     }
     int16_t f = static_cast<int16_t>(1 - r);
@@ -429,10 +429,10 @@ void FamiGFX::drawCircle(int16_t x0, int16_t y0, int16_t r, fgfx_color_t color)
     }
 }
 
-void FamiGFX::fillCircle(int16_t x0, int16_t y0, int16_t r, fgfx_color_t color)
+void ThinGFX::fillCircle(int16_t x0, int16_t y0, int16_t r, tgfx_color_t color)
 {
     if (rotation_ == 0 && canvas_ && !inverted_) {
-        fgfx_fill_circle(canvas_, x0, y0, r, color);
+        tgfx_fill_circle(canvas_, x0, y0, r, color);
         return;
     }
     for (int16_t y = static_cast<int16_t>(-r); y <= r; ++y) {
@@ -444,57 +444,57 @@ void FamiGFX::fillCircle(int16_t x0, int16_t y0, int16_t r, fgfx_color_t color)
     }
 }
 
-void FamiGFX::drawTriangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1,
-                           int16_t x2, int16_t y2, fgfx_color_t color)
+void ThinGFX::drawTriangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1,
+                           int16_t x2, int16_t y2, tgfx_color_t color)
 {
     drawLine(x0, y0, x1, y1, color);
     drawLine(x1, y1, x2, y2, color);
     drawLine(x2, y2, x0, y0, color);
 }
 
-void FamiGFX::fillTriangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1,
-                           int16_t x2, int16_t y2, fgfx_color_t color)
+void ThinGFX::fillTriangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1,
+                           int16_t x2, int16_t y2, tgfx_color_t color)
 {
     if (rotation_ == 0 && canvas_ && !inverted_) {
-        fgfx_fill_triangle(canvas_, x0, y0, x1, y1, x2, y2, color);
+        tgfx_fill_triangle(canvas_, x0, y0, x1, y1, x2, y2, color);
     } else {
-        fgfx_fill_triangle(canvas_, x0, y0, x1, y1, x2, y2, color);
+        tgfx_fill_triangle(canvas_, x0, y0, x1, y1, x2, y2, color);
     }
 }
 
-void FamiGFX::drawRoundRect(int16_t x, int16_t y, int16_t w, int16_t h,
-                            int16_t radius, fgfx_color_t color)
+void ThinGFX::drawRoundRect(int16_t x, int16_t y, int16_t w, int16_t h,
+                            int16_t radius, tgfx_color_t color)
 {
     if (rotation_ == 0 && canvas_ && !inverted_) {
-        fgfx_draw_round_rect(canvas_, x, y, w, h, radius, color);
+        tgfx_draw_round_rect(canvas_, x, y, w, h, radius, color);
         return;
     }
     drawRect(x, y, w, h, color);
 }
 
-void FamiGFX::fillRoundRect(int16_t x, int16_t y, int16_t w, int16_t h,
-                            int16_t radius, fgfx_color_t color)
+void ThinGFX::fillRoundRect(int16_t x, int16_t y, int16_t w, int16_t h,
+                            int16_t radius, tgfx_color_t color)
 {
     if (rotation_ == 0 && canvas_ && !inverted_) {
-        fgfx_fill_round_rect(canvas_, x, y, w, h, radius, color);
+        tgfx_fill_round_rect(canvas_, x, y, w, h, radius, color);
         return;
     }
     (void)radius;
     fillRect(x, y, w, h, color);
 }
 
-void FamiGFX::drawBitmap(int16_t x, int16_t y, const uint8_t *bitmap,
-                         int16_t w, int16_t h, fgfx_color_t color)
+void ThinGFX::drawBitmap(int16_t x, int16_t y, const uint8_t *bitmap,
+                         int16_t w, int16_t h, tgfx_color_t color)
 {
     drawBitmap(x, y, bitmap, w, h, color, color);
 }
 
-void FamiGFX::drawBitmap(int16_t x, int16_t y, const uint8_t *bitmap,
-                         int16_t w, int16_t h, fgfx_color_t color,
-                         fgfx_color_t bg)
+void ThinGFX::drawBitmap(int16_t x, int16_t y, const uint8_t *bitmap,
+                         int16_t w, int16_t h, tgfx_color_t color,
+                         tgfx_color_t bg)
 {
     if (rotation_ == 0 && canvas_ && !inverted_) {
-        fgfx_draw_bitmap_1bpp(canvas_, x, y, bitmap, w, h, color, bg);
+        tgfx_draw_bitmap_1bpp(canvas_, x, y, bitmap, w, h, color, bg);
         return;
     }
     if (!bitmap) {
@@ -512,41 +512,41 @@ void FamiGFX::drawBitmap(int16_t x, int16_t y, const uint8_t *bitmap,
     }
 }
 
-void FamiGFX::drawChar(int16_t x, int16_t y, unsigned char ch,
-                       fgfx_color_t color, fgfx_color_t bg, uint8_t size)
+void ThinGFX::drawChar(int16_t x, int16_t y, unsigned char ch,
+                       tgfx_color_t color, tgfx_color_t bg, uint8_t size)
 {
     drawChar(x, y, ch, color, bg, size, size);
 }
 
-void FamiGFX::drawChar(int16_t x, int16_t y, unsigned char ch,
-                       fgfx_color_t color, fgfx_color_t bg, uint8_t size_x,
+void ThinGFX::drawChar(int16_t x, int16_t y, unsigned char ch,
+                       tgfx_color_t color, tgfx_color_t bg, uint8_t size_x,
                        uint8_t size_y)
 {
     if (!canvas_) {
         return;
     }
     if (font_) {
-        fgfx_draw_char_font(canvas_, font_, x, y, ch, color, bg, size_x, size_y);
+        tgfx_draw_char_font(canvas_, font_, x, y, ch, color, bg, size_x, size_y);
     } else {
-        fgfx_draw_char_5x7(canvas_, x, y, static_cast<char>(ch), color, bg,
+        tgfx_draw_char_5x7(canvas_, x, y, static_cast<char>(ch), color, bg,
                            size_x, size_y);
     }
 }
 
-void FamiGFX::getTextBounds(const char *text, int16_t x, int16_t y,
+void ThinGFX::getTextBounds(const char *text, int16_t x, int16_t y,
                             int16_t *x1, int16_t *y1, uint16_t *w,
                             uint16_t *h) const
 {
     if (font_) {
-        fgfx_text_bounds_font(font_, text, x, y, text_size_x_, text_size_y_,
+        tgfx_text_bounds_font(font_, text, x, y, text_size_x_, text_size_y_,
                               x1, y1, w, h);
     } else {
-        fgfx_text_bounds_5x7(text, x, y, text_size_x_, text_size_y_, x1, y1,
+        tgfx_text_bounds_5x7(text, x, y, text_size_x_, text_size_y_, x1, y1,
                              w, h);
     }
 }
 
-size_t FamiGFX::write(uint8_t byte)
+size_t ThinGFX::write(uint8_t byte)
 {
     if (!canvas_) {
         return 0;
@@ -578,34 +578,34 @@ size_t FamiGFX::write(uint8_t byte)
     return 1;
 }
 
-void FamiGFX::setTextSize(uint8_t size_x, uint8_t size_y)
+void ThinGFX::setTextSize(uint8_t size_x, uint8_t size_y)
 {
     text_size_x_ = size_x ? size_x : 1;
     text_size_y_ = size_y ? size_y : 1;
 }
 
-void FamiGFX::setFont(const Font *font)
+void ThinGFX::setFont(const Font *font)
 {
     font_ = font ? font : defaultFont();
 }
 
 OwnedCanvas::OwnedCanvas(uint16_t width, uint16_t height, PixelFormat format)
-    : FamiGFX(fgfx_canvas_create(width, height, nativePixelFormat(format)))
+    : ThinGFX(tgfx_canvas_create(width, height, nativePixelFormat(format)))
 {
 }
 
 OwnedCanvas::~OwnedCanvas()
 {
-    fgfx_canvas_t *canvas = canvas_;
+    tgfx_canvas_t *canvas = canvas_;
     canvas_ = 0;
-    fgfx_canvas_destroy(canvas);
+    tgfx_canvas_destroy(canvas);
 }
 
-static fgfx_rect_t toNativeRect(const Rect &rect);
+static tgfx_rect_t toNativeRect(const Rect &rect);
 
-static fgfx_rect_t toNativeRect(const Rect &rect)
+static tgfx_rect_t toNativeRect(const Rect &rect)
 {
-    fgfx_rect_t native;
+    tgfx_rect_t native;
     native.x = rect.x;
     native.y = rect.y;
     native.w = rect.w;
@@ -613,7 +613,7 @@ static fgfx_rect_t toNativeRect(const Rect &rect)
     return native;
 }
 
-static Rect fromNativeRect(const fgfx_rect_t &rect)
+static Rect fromNativeRect(const tgfx_rect_t &rect)
 {
     Rect native;
     native.x = rect.x;
@@ -623,9 +623,43 @@ static Rect fromNativeRect(const fgfx_rect_t &rect)
     return native;
 }
 
+static uint32_t speedToPerMille(float speed)
+{
+    if (!(speed > 0.0f)) {
+        return 1000u;
+    }
+    if (speed > 64.0f) {
+        speed = 64.0f;
+    }
+    return static_cast<uint32_t>(speed * 1000.0f + 0.5f);
+}
+
+static float speedFromPerMille(uint32_t speed)
+{
+    return speed ? static_cast<float>(speed) / 1000.0f : 1.0f;
+}
+
+static tgfx_transition_t toNativeTransition(const Transition &transition)
+{
+    tgfx_transition_t native;
+    native.easing = static_cast<tgfx_easing_t>(transition.easing);
+    native.duration_ms = transition.durationMs;
+    native.speed_per_mille = speedToPerMille(transition.speed);
+    return native;
+}
+
+static Transition fromNativeTransition(const tgfx_transition_t &transition)
+{
+    Transition out;
+    out.easing = static_cast<Easing>(transition.easing);
+    out.durationMs = transition.duration_ms;
+    out.speed = speedFromPerMille(transition.speed_per_mille);
+    return out;
+}
+
 Rect Window::rect() const
 {
-    fgfx_rect_t native;
+    tgfx_rect_t native;
     native.x = 0;
     native.y = 0;
     native.w = 0;
@@ -633,7 +667,7 @@ Rect Window::rect() const
     if (!valid()) {
         return fromNativeRect(native);
     }
-    fgfx_node_get_rect(gui_->ctx_, handle_, &native);
+    tgfx_node_get_rect(gui_->ctx_, handle_, &native);
     return fromNativeRect(native);
 }
 
@@ -642,13 +676,90 @@ bool Window::setRect(const Rect &rect)
     if (!valid()) {
         return false;
     }
-    fgfx_context_lock(gui_->ctx_);
-    bool ok = fgfx_node_set_rect(gui_->ctx_, handle_, toNativeRect(rect)) == FGFX_OK;
-    fgfx_context_unlock(gui_->ctx_);
+    tgfx_context_lock(gui_->ctx_);
+    bool ok = tgfx_node_set_rect(gui_->ctx_, handle_, toNativeRect(rect)) == TGFX_OK;
+    tgfx_context_unlock(gui_->ctx_);
     if (ok) {
         gui_->notifyDaemon();
     }
     return ok;
+}
+
+bool Window::setRectImmediate(const Rect &rect)
+{
+    if (!valid()) {
+        return false;
+    }
+    tgfx_context_lock(gui_->ctx_);
+    bool ok = tgfx_node_set_rect_immediate(gui_->ctx_, handle_, toNativeRect(rect)) == TGFX_OK;
+    tgfx_context_unlock(gui_->ctx_);
+    if (ok) {
+        gui_->notifyDaemon();
+    }
+    return ok;
+}
+
+bool Window::setRectAnimated(const Rect &rect, const Transition &transition)
+{
+    if (!valid()) {
+        return false;
+    }
+    tgfx_context_lock(gui_->ctx_);
+    bool ok = tgfx_node_set_rect_animated(gui_->ctx_, handle_, toNativeRect(rect),
+                                          toNativeTransition(transition)) == TGFX_OK;
+    tgfx_context_unlock(gui_->ctx_);
+    if (ok) {
+        gui_->notifyDaemon();
+    }
+    return ok;
+}
+
+bool Window::setTransition(const Transition &transition)
+{
+    if (!valid()) {
+        return false;
+    }
+    tgfx_context_lock(gui_->ctx_);
+    bool ok = tgfx_node_set_transition(gui_->ctx_, handle_,
+                                       toNativeTransition(transition)) == TGFX_OK;
+    tgfx_context_unlock(gui_->ctx_);
+    return ok;
+}
+
+Transition Window::transition() const
+{
+    tgfx_transition_t native;
+    native.easing = TGFX_EASING_NONE;
+    native.duration_ms = 0;
+    native.speed_per_mille = 1000;
+    if (valid()) {
+        tgfx_node_get_transition(gui_->ctx_, handle_, &native);
+    }
+    return fromNativeTransition(native);
+}
+
+bool Window::setDestroyTransition(const Transition &transition)
+{
+    if (!valid()) {
+        return false;
+    }
+    tgfx_context_lock(gui_->ctx_);
+    bool ok = tgfx_node_set_destroy_transition(gui_->ctx_, handle_,
+                                               toNativeTransition(transition)) == TGFX_OK;
+    tgfx_context_unlock(gui_->ctx_);
+    return ok;
+}
+
+Transition Window::destroyTransition() const
+{
+    tgfx_transition_t native;
+    native.easing = TGFX_EASING_NONE;
+    native.duration_ms = 0;
+    native.speed_per_mille = 1000;
+    if (valid()) {
+        tgfx_node_get_destroy_transition(gui_->ctx_, handle_, &native);
+    }
+    return fromNativeTransition(native);
 }
 
 bool Window::setVisible(bool visible)
@@ -656,9 +767,9 @@ bool Window::setVisible(bool visible)
     if (!valid()) {
         return false;
     }
-    fgfx_context_lock(gui_->ctx_);
-    bool ok = fgfx_node_set_visible(gui_->ctx_, handle_, visible ? 1u : 0u) == FGFX_OK;
-    fgfx_context_unlock(gui_->ctx_);
+    tgfx_context_lock(gui_->ctx_);
+    bool ok = tgfx_node_set_visible(gui_->ctx_, handle_, visible ? 1u : 0u) == TGFX_OK;
+    tgfx_context_unlock(gui_->ctx_);
     if (ok) {
         gui_->notifyDaemon();
     }
@@ -670,9 +781,9 @@ bool Window::setOpacity(uint8_t opacity)
     if (!valid()) {
         return false;
     }
-    fgfx_context_lock(gui_->ctx_);
-    bool ok = fgfx_node_set_opacity(gui_->ctx_, handle_, opacity) == FGFX_OK;
-    fgfx_context_unlock(gui_->ctx_);
+    tgfx_context_lock(gui_->ctx_);
+    bool ok = tgfx_node_set_opacity(gui_->ctx_, handle_, opacity) == TGFX_OK;
+    tgfx_context_unlock(gui_->ctx_);
     if (ok) {
         gui_->notifyDaemon();
     }
@@ -684,9 +795,9 @@ bool Window::bringToFront()
     if (!valid()) {
         return false;
     }
-    fgfx_context_lock(gui_->ctx_);
-    bool ok = fgfx_node_bring_to_front(gui_->ctx_, handle_) == FGFX_OK;
-    fgfx_context_unlock(gui_->ctx_);
+    tgfx_context_lock(gui_->ctx_);
+    bool ok = tgfx_node_bring_to_front(gui_->ctx_, handle_) == TGFX_OK;
+    tgfx_context_unlock(gui_->ctx_);
     if (ok) {
         gui_->notifyDaemon();
     }
@@ -698,9 +809,9 @@ bool Window::sendToBack()
     if (!valid()) {
         return false;
     }
-    fgfx_context_lock(gui_->ctx_);
-    bool ok = fgfx_node_send_to_back(gui_->ctx_, handle_) == FGFX_OK;
-    fgfx_context_unlock(gui_->ctx_);
+    tgfx_context_lock(gui_->ctx_);
+    bool ok = tgfx_node_send_to_back(gui_->ctx_, handle_) == TGFX_OK;
+    tgfx_context_unlock(gui_->ctx_);
     if (ok) {
         gui_->notifyDaemon();
     }
@@ -712,9 +823,9 @@ bool Window::setParent(const Window &parent)
     if (!valid() || parent.gui_ != gui_ || !parent.valid()) {
         return false;
     }
-    fgfx_context_lock(gui_->ctx_);
-    bool ok = fgfx_node_set_parent(gui_->ctx_, handle_, parent.handle_) == FGFX_OK;
-    fgfx_context_unlock(gui_->ctx_);
+    tgfx_context_lock(gui_->ctx_);
+    bool ok = tgfx_node_set_parent(gui_->ctx_, handle_, parent.handle_) == TGFX_OK;
+    tgfx_context_unlock(gui_->ctx_);
     if (ok) {
         gui_->notifyDaemon();
     }
@@ -726,8 +837,8 @@ Window Window::parent() const
     if (!valid()) {
         return Window();
     }
-    fgfx_handle_t parent = fgfx_node_parent(gui_->ctx_, handle_);
-    return parent != FGFX_INVALID_HANDLE ? Window(gui_, parent) : Window();
+    tgfx_handle_t parent = tgfx_node_parent(gui_->ctx_, handle_);
+    return parent != TGFX_INVALID_HANDLE ? Window(gui_, parent) : Window();
 }
 
 Window Window::firstChild() const
@@ -735,8 +846,8 @@ Window Window::firstChild() const
     if (!valid()) {
         return Window();
     }
-    fgfx_handle_t child = fgfx_node_first_child(gui_->ctx_, handle_);
-    return child != FGFX_INVALID_HANDLE ? Window(gui_, child) : Window();
+    tgfx_handle_t child = tgfx_node_first_child(gui_->ctx_, handle_);
+    return child != TGFX_INVALID_HANDLE ? Window(gui_, child) : Window();
 }
 
 Window Window::nextSibling() const
@@ -744,8 +855,8 @@ Window Window::nextSibling() const
     if (!valid()) {
         return Window();
     }
-    fgfx_handle_t sibling = fgfx_node_next_sibling(gui_->ctx_, handle_);
-    return sibling != FGFX_INVALID_HANDLE ? Window(gui_, sibling) : Window();
+    tgfx_handle_t sibling = tgfx_node_next_sibling(gui_->ctx_, handle_);
+    return sibling != TGFX_INVALID_HANDLE ? Window(gui_, sibling) : Window();
 }
 
 Window Window::createChild(const WindowConfig &config) const
@@ -766,7 +877,7 @@ bool Window::invalidate(const Rect &rect)
     if (!valid()) {
         return false;
     }
-    bool ok = fgfx_invalidate(gui_->ctx_, handle_, toNativeRect(rect)) == FGFX_OK;
+    bool ok = tgfx_invalidate(gui_->ctx_, handle_, toNativeRect(rect)) == TGFX_OK;
     if (ok) {
         gui_->notifyDaemon();
     }
@@ -781,12 +892,12 @@ bool Window::invalidate()
     return invalidate(r);
 }
 
-bool Window::dispatch(const fgfx_event_t &event) const
+bool Window::dispatch(const tgfx_event_t &event) const
 {
     if (!valid()) {
         return false;
     }
-    return fgfx_dispatch_to(gui_->ctx_, handle_, &event) != 0;
+    return tgfx_dispatch_to(gui_->ctx_, handle_, &event) != 0;
 }
 
 bool Window::destroy()
@@ -795,19 +906,68 @@ bool Window::destroy()
         return false;
     }
     Gui *gui = gui_;
-    fgfx_handle_t handle = handle_;
-    fgfx_result_t result;
+    tgfx_handle_t handle = handle_;
+    tgfx_result_t result;
 
     gui_ = 0;
-    handle_ = FGFX_INVALID_HANDLE;
-    fgfx_context_lock(gui->ctx_);
-    gui->removeBindingsRecursive(handle);
-    result = fgfx_node_destroy(gui->ctx_, handle);
-    fgfx_context_unlock(gui->ctx_);
-    if (result == FGFX_OK) {
+    handle_ = TGFX_INVALID_HANDLE;
+    tgfx_context_lock(gui->ctx_);
+    result = tgfx_node_destroy(gui->ctx_, handle);
+    if (result == TGFX_OK && !tgfx_node_exists(gui->ctx_, handle)) {
+        gui->removeBindingsRecursive(handle);
+    }
+    tgfx_context_unlock(gui->ctx_);
+    if (result == TGFX_OK) {
         gui->notifyDaemon();
     }
-    return result == FGFX_OK;
+    return result == TGFX_OK;
+}
+
+bool Window::destroyImmediate()
+{
+    if (!valid()) {
+        return false;
+    }
+    Gui *gui = gui_;
+    tgfx_handle_t handle = handle_;
+    tgfx_result_t result;
+
+    gui_ = 0;
+    handle_ = TGFX_INVALID_HANDLE;
+    tgfx_context_lock(gui->ctx_);
+    result = tgfx_node_destroy_immediate(gui->ctx_, handle);
+    if (result == TGFX_OK) {
+        gui->removeBindingsRecursive(handle);
+    }
+    tgfx_context_unlock(gui->ctx_);
+    if (result == TGFX_OK) {
+        gui->notifyDaemon();
+    }
+    return result == TGFX_OK;
+}
+
+bool Window::destroyAnimated(const Transition &transition)
+{
+    if (!valid()) {
+        return false;
+    }
+    Gui *gui = gui_;
+    tgfx_handle_t handle = handle_;
+    tgfx_result_t result;
+
+    gui_ = 0;
+    handle_ = TGFX_INVALID_HANDLE;
+    tgfx_context_lock(gui->ctx_);
+    result = tgfx_node_destroy_animated(gui->ctx_, handle,
+                                        toNativeTransition(transition));
+    if (result == TGFX_OK && !tgfx_node_exists(gui->ctx_, handle)) {
+        gui->removeBindingsRecursive(handle);
+    }
+    tgfx_context_unlock(gui->ctx_);
+    if (result == TGFX_OK) {
+        gui->notifyDaemon();
+    }
+    return result == TGFX_OK;
 }
 
 Canvas Window::canvas() const
@@ -817,7 +977,7 @@ Canvas Window::canvas() const
 
 Canvas Window::back() const
 {
-    return Canvas(valid() ? fgfx_node_back_canvas(gui_->ctx_, handle_) : 0);
+    return Canvas(valid() ? tgfx_node_back_canvas(gui_->ctx_, handle_) : 0);
 }
 
 Canvas Window::draw() const
@@ -827,33 +987,33 @@ Canvas Window::draw() const
 
 bool Window::commit()
 {
-    return valid() && fgfx_node_commit(gui_->ctx_, handle_) == FGFX_OK;
+    return valid() && tgfx_node_commit(gui_->ctx_, handle_) == TGFX_OK;
 }
 
 bool Window::commit(const Rect &rect)
 {
-    return valid() && fgfx_node_commit_rect(gui_->ctx_, handle_, toNativeRect(rect)) == FGFX_OK;
+    return valid() && tgfx_node_commit_rect(gui_->ctx_, handle_, toNativeRect(rect)) == TGFX_OK;
 }
 
 bool Window::discard()
 {
-    return valid() && fgfx_node_discard(gui_->ctx_, handle_) == FGFX_OK;
+    return valid() && tgfx_node_discard(gui_->ctx_, handle_) == TGFX_OK;
 }
 
 Gui::Gui(uint16_t width, uint16_t height)
-    : ctx_(fgfx_create(width, height)), owned_port_(0), owns_port_(false), daemon_started_(false)
+    : ctx_(tgfx_create(width, height)), owned_port_(0), owns_port_(false), daemon_started_(false)
 {
 }
 
 Gui::Gui(uint16_t width, uint16_t height, PixelFormat outputFormat)
-    : ctx_(fgfx_create(width, height)), owned_port_(0), owns_port_(false), daemon_started_(false)
+    : ctx_(tgfx_create(width, height)), owned_port_(0), owns_port_(false), daemon_started_(false)
 {
     PortConfig config;
     config.format = outputFormat;
     config.autoStartDaemon = true;
     owned_port_ = createDefaultPort(width, height, config);
     if (ctx_ && owned_port_ && owned_port_->valid() &&
-        fgfx_context_attach_port(ctx_, owned_port_) == FGFX_OK) {
+        tgfx_context_attach_port(ctx_, owned_port_) == TGFX_OK) {
         owns_port_ = true;
         if (config.autoStartDaemon) {
             startDaemon();
@@ -865,11 +1025,11 @@ Gui::Gui(uint16_t width, uint16_t height, PixelFormat outputFormat)
 }
 
 Gui::Gui(uint16_t width, uint16_t height, const PortConfig &portConfig)
-    : ctx_(fgfx_create(width, height)), owned_port_(0), owns_port_(false), daemon_started_(false)
+    : ctx_(tgfx_create(width, height)), owned_port_(0), owns_port_(false), daemon_started_(false)
 {
     owned_port_ = createDefaultPort(width, height, portConfig);
     if (ctx_ && owned_port_ && owned_port_->valid() &&
-        fgfx_context_attach_port(ctx_, owned_port_) == FGFX_OK) {
+        tgfx_context_attach_port(ctx_, owned_port_) == TGFX_OK) {
         owns_port_ = true;
         if (portConfig.autoStartDaemon) {
             startDaemon();
@@ -881,10 +1041,10 @@ Gui::Gui(uint16_t width, uint16_t height, const PortConfig &portConfig)
 }
 
 Gui::Gui(uint16_t width, uint16_t height, Port *externalPort)
-    : ctx_(fgfx_create(width, height)), owned_port_(0), owns_port_(false), daemon_started_(false)
+    : ctx_(tgfx_create(width, height)), owned_port_(0), owns_port_(false), daemon_started_(false)
 {
     if (ctx_ && externalPort) {
-        fgfx_context_attach_port(ctx_, externalPort);
+        tgfx_context_attach_port(ctx_, externalPort);
     }
 }
 
@@ -895,7 +1055,7 @@ Gui::~Gui()
         delete bindings_[i];
     }
     bindings_.clear();
-    fgfx_destroy(ctx_);
+    tgfx_destroy(ctx_);
     ctx_ = 0;
     if (owns_port_ && owned_port_) {
         destroyDefaultPort(owned_port_);
@@ -906,53 +1066,53 @@ Gui::~Gui()
 
 uint16_t Gui::width() const
 {
-    return fgfx_width(ctx_);
+    return tgfx_width(ctx_);
 }
 
 uint16_t Gui::height() const
 {
-    return fgfx_height(ctx_);
+    return tgfx_height(ctx_);
 }
 
 bool Gui::resize(uint16_t width, uint16_t height)
 {
-    return fgfx_resize(ctx_, width, height) == FGFX_OK;
+    return tgfx_resize(ctx_, width, height) == TGFX_OK;
 }
 
 bool Gui::needsRender() const
 {
-    return fgfx_needs_render(ctx_) != 0;
+    return tgfx_needs_render(ctx_) != 0;
 }
 
 void Gui::tick(uint32_t delta_ms)
 {
-    fgfx_tick(ctx_, delta_ms);
+    tgfx_tick(ctx_, delta_ms);
 }
 
 bool Gui::animating() const
 {
-    return fgfx_animating(ctx_) != 0;
+    return tgfx_animating(ctx_) != 0;
 }
 
 void Gui::lock()
 {
     if (ctx_) {
-        fgfx_context_lock(ctx_);
+        tgfx_context_lock(ctx_);
     }
 }
 
 void Gui::unlock()
 {
     if (ctx_) {
-        fgfx_context_unlock(ctx_);
+        tgfx_context_unlock(ctx_);
     }
 }
 
 Window Gui::root() const
 {
-    fgfx_context_t *ctx = const_cast<fgfx_context_t *>(ctx_);
-    fgfx_handle_t handle = fgfx_root_handle(ctx);
-    return handle != FGFX_INVALID_HANDLE ? Window(const_cast<Gui *>(this), handle)
+    tgfx_context_t *ctx = const_cast<tgfx_context_t *>(ctx_);
+    tgfx_handle_t handle = tgfx_root_handle(ctx);
+    return handle != TGFX_INVALID_HANDLE ? Window(const_cast<Gui *>(this), handle)
                                          : Window();
 }
 
@@ -964,10 +1124,10 @@ Window Gui::createWindow(const WindowConfig &config)
 
 Window Gui::createWindow(const Window &parent, const WindowConfig &config)
 {
-    fgfx_node_desc_t desc;
-    fgfx_handle_t handle = FGFX_INVALID_HANDLE;
+    tgfx_node_desc_t desc;
+    tgfx_handle_t handle = TGFX_INVALID_HANDLE;
     NodeBinding *binding;
-    fgfx_result_t result;
+    tgfx_result_t result;
 
     if (!ctx_ || parent.gui_ != this || !parent.valid()) {
         return Window();
@@ -975,12 +1135,12 @@ Window Gui::createWindow(const Window &parent, const WindowConfig &config)
 
     binding = new NodeBinding;
     binding->gui = this;
-    binding->handle = FGFX_INVALID_HANDLE;
+    binding->handle = TGFX_INVALID_HANDLE;
     binding->draw = config.onDraw;
     binding->event = config.onEvent;
     binding->user = config.user;
 
-    desc.kind = static_cast<fgfx_node_kind_t>(config.kind);
+    desc.kind = static_cast<tgfx_node_kind_t>(config.kind);
     desc.x = config.frame.x;
     desc.y = config.frame.y;
     desc.w = config.frame.w;
@@ -990,21 +1150,24 @@ Window Gui::createWindow(const Window &parent, const WindowConfig &config)
     desc.owns_canvas = config.ownsCanvas ? 1u : 0u;
     desc.canvas_format = nativePixelFormat(config.canvasFormat);
     desc.show_title = config.showTitle ? 1u : 0u;
-    desc.border = static_cast<fgfx_window_border_t>(config.border);
+    desc.border = static_cast<tgfx_window_border_t>(config.border);
     desc.title = config.title;
+    desc.transition = toNativeTransition(config.transition);
+    desc.create_transition = toNativeTransition(config.createTransition);
+    desc.destroy_transition = toNativeTransition(config.destroyTransition);
     desc.draw = config.onDraw ? Gui::drawThunk : 0;
     desc.event = config.onEvent ? Gui::eventThunk : 0;
     desc.user = binding;
 
-    fgfx_context_lock(ctx_);
-    result = fgfx_node_create(ctx_, parent.handle_, &desc, &handle);
-    if (result == FGFX_OK) {
+    tgfx_context_lock(ctx_);
+    result = tgfx_node_create(ctx_, parent.handle_, &desc, &handle);
+    if (result == TGFX_OK) {
         binding->handle = handle;
         bindings_.push_back(binding);
     }
-    fgfx_context_unlock(ctx_);
+    tgfx_context_unlock(ctx_);
 
-    if (result != FGFX_OK) {
+    if (result != TGFX_OK) {
         delete binding;
         return Window();
     }
@@ -1036,50 +1199,50 @@ bool Gui::setFocus(const Window &window)
     if (!ctx_ || window.gui_ != this) {
         return false;
     }
-    return fgfx_focus_set(ctx_, window.handle_) == FGFX_OK;
+    return tgfx_focus_set(ctx_, window.handle_) == TGFX_OK;
 }
 
 bool Gui::clearFocus()
 {
-    return ctx_ && fgfx_focus_set(ctx_, FGFX_INVALID_HANDLE) == FGFX_OK;
+    return ctx_ && tgfx_focus_set(ctx_, TGFX_INVALID_HANDLE) == TGFX_OK;
 }
 
 bool Gui::focusNext()
 {
-    return ctx_ && fgfx_focus_next(ctx_) != FGFX_INVALID_HANDLE;
+    return ctx_ && tgfx_focus_next(ctx_) != TGFX_INVALID_HANDLE;
 }
 
 bool Gui::focusPrevious()
 {
-    return ctx_ && fgfx_focus_prev(ctx_) != FGFX_INVALID_HANDLE;
+    return ctx_ && tgfx_focus_prev(ctx_) != TGFX_INVALID_HANDLE;
 }
 
 Window Gui::focus() const
 {
-    fgfx_context_t *ctx = const_cast<fgfx_context_t *>(ctx_);
-    fgfx_handle_t handle = fgfx_focus_get(ctx);
-    return handle != FGFX_INVALID_HANDLE ? Window(const_cast<Gui *>(this), handle)
+    tgfx_context_t *ctx = const_cast<tgfx_context_t *>(ctx_);
+    tgfx_handle_t handle = tgfx_focus_get(ctx);
+    return handle != TGFX_INVALID_HANDLE ? Window(const_cast<Gui *>(this), handle)
                                          : Window();
 }
 
-bool Gui::dispatchTo(const Window &window, const fgfx_event_t &event)
+bool Gui::dispatchTo(const Window &window, const tgfx_event_t &event)
 {
     if (!ctx_ || window.gui_ != this || !window.valid()) {
         return false;
     }
-    return fgfx_dispatch_to(ctx_, window.handle_, &event) != 0;
+    return tgfx_dispatch_to(ctx_, window.handle_, &event) != 0;
 }
 
-bool Gui::dispatchEvent(const fgfx_event_t &event, Window *target)
+bool Gui::dispatchEvent(const tgfx_event_t &event, Window *target)
 {
-    fgfx_handle_t handle = FGFX_INVALID_HANDLE;
+    tgfx_handle_t handle = TGFX_INVALID_HANDLE;
     uint8_t handled;
     if (!ctx_) {
         return false;
     }
-    handled = fgfx_dispatch_event(ctx_, &event, &handle);
+    handled = tgfx_dispatch_event(ctx_, &event, &handle);
     if (target) {
-        *target = handle != FGFX_INVALID_HANDLE ? Window(this, handle) : Window();
+        *target = handle != TGFX_INVALID_HANDLE ? Window(this, handle) : Window();
     }
     return handled != 0;
 }
@@ -1087,27 +1250,27 @@ bool Gui::dispatchEvent(const fgfx_event_t &event, Window *target)
 bool Gui::dispatchKey(uint32_t key, bool pressed, bool repeat,
                       uint32_t modifiers, Window *target)
 {
-    fgfx_handle_t handle = FGFX_INVALID_HANDLE;
+    tgfx_handle_t handle = TGFX_INVALID_HANDLE;
     uint8_t handled;
     if (!ctx_) {
         return false;
     }
-    handled = fgfx_dispatch_key(ctx_, key, pressed ? 1u : 0u,
+    handled = tgfx_dispatch_key(ctx_, key, pressed ? 1u : 0u,
                                 repeat ? 1u : 0u, modifiers, &handle);
     if (target) {
-        *target = handle != FGFX_INVALID_HANDLE ? Window(this, handle) : Window();
+        *target = handle != TGFX_INVALID_HANDLE ? Window(this, handle) : Window();
     }
     return handled != 0;
 }
 
-bool Gui::render(FamiGFX &target)
+bool Gui::render(ThinGFX &target)
 {
     return render(target.native());
 }
 
-bool Gui::render(fgfx_canvas_t *target)
+bool Gui::render(tgfx_canvas_t *target)
 {
-    return fgfx_render(ctx_, target) == FGFX_OK;
+    return tgfx_render(ctx_, target) == TGFX_OK;
 }
 
 bool Gui::attachPort(Port *port)
@@ -1116,7 +1279,7 @@ bool Gui::attachPort(Port *port)
         return false;
     }
     stopDaemon();
-    bool ok = fgfx_context_attach_port(ctx_, port) == FGFX_OK;
+    bool ok = tgfx_context_attach_port(ctx_, port) == TGFX_OK;
     if (ok && owns_port_ && owned_port_ && owned_port_ != port) {
         destroyDefaultPort(owned_port_);
         owned_port_ = 0;
@@ -1127,12 +1290,12 @@ bool Gui::attachPort(Port *port)
 
 Port *Gui::port()
 {
-    return ctx_ ? fgfx_context_port(ctx_) : 0;
+    return ctx_ ? tgfx_context_port(ctx_) : 0;
 }
 
 const Port *Gui::port() const
 {
-    return ctx_ ? fgfx_context_port(const_cast<fgfx_context_t *>(ctx_)) : 0;
+    return ctx_ ? tgfx_context_port(const_cast<tgfx_context_t *>(ctx_)) : 0;
 }
 
 bool Gui::portValid() const
@@ -1144,13 +1307,17 @@ bool Gui::portValid() const
 bool Gui::pump()
 {
     Port *p = port();
-    return p ? p->pump(*this) : true;
+    bool result = p ? p->pump(*this) : true;
+    removeStaleBindings();
+    return result;
 }
 
 bool Gui::present(const Rect *dirty)
 {
     (void)dirty;
-    return ctx_ && fgfx_daemon_step(ctx_) == FGFX_OK;
+    bool ok = ctx_ && tgfx_daemon_step(ctx_) == TGFX_OK;
+    removeStaleBindings();
+    return ok;
 }
 
 bool Gui::startDaemon()
@@ -1158,7 +1325,7 @@ bool Gui::startDaemon()
     if (!ctx_ || daemon_started_) {
         return ctx_ != 0;
     }
-    bool ok = fgfx_daemon_start(ctx_) == FGFX_OK;
+    bool ok = tgfx_daemon_start(ctx_) == TGFX_OK;
     daemon_started_ = ok;
     return ok;
 }
@@ -1166,27 +1333,29 @@ bool Gui::startDaemon()
 void Gui::stopDaemon()
 {
     if (ctx_ && daemon_started_) {
-        fgfx_daemon_stop(ctx_);
+        tgfx_daemon_stop(ctx_);
         daemon_started_ = false;
     }
 }
 
 bool Gui::daemonStep()
 {
-    return ctx_ && fgfx_daemon_step(ctx_) == FGFX_OK;
+    bool ok = ctx_ && tgfx_daemon_step(ctx_) == TGFX_OK;
+    removeStaleBindings();
+    return ok;
 }
 
 void Gui::notifyDaemon()
 {
     if (ctx_) {
-        fgfx_daemon_notify(ctx_);
+        tgfx_daemon_notify(ctx_);
     }
 }
 
 
 
-void Gui::drawThunk(fgfx_context_t *ctx, fgfx_handle_t handle,
-                    fgfx_canvas_t *canvas, const fgfx_rect_t *dirty,
+void Gui::drawThunk(tgfx_context_t *ctx, tgfx_handle_t handle,
+                    tgfx_canvas_t *canvas, const tgfx_rect_t *dirty,
                     void *user)
 {
     NodeBinding *binding = static_cast<NodeBinding *>(user);
@@ -1205,8 +1374,8 @@ void Gui::drawThunk(fgfx_context_t *ctx, fgfx_handle_t handle,
     binding->draw(window, gfx, rect, binding->user);
 }
 
-uint8_t Gui::eventThunk(fgfx_context_t *ctx, fgfx_handle_t handle,
-                        const fgfx_event_t *event, void *user)
+uint8_t Gui::eventThunk(tgfx_context_t *ctx, tgfx_handle_t handle,
+                        const tgfx_event_t *event, void *user)
 {
     NodeBinding *binding = static_cast<NodeBinding *>(user);
     (void)ctx;
@@ -1217,7 +1386,7 @@ uint8_t Gui::eventThunk(fgfx_context_t *ctx, fgfx_handle_t handle,
     return binding->event(window, *event, binding->user) ? 1u : 0u;
 }
 
-Gui::NodeBinding *Gui::bindingFor(fgfx_handle_t handle)
+Gui::NodeBinding *Gui::bindingFor(tgfx_handle_t handle)
 {
     for (size_t i = 0; i < bindings_.size(); ++i) {
         if (bindings_[i]->handle == handle) {
@@ -1227,7 +1396,7 @@ Gui::NodeBinding *Gui::bindingFor(fgfx_handle_t handle)
     return 0;
 }
 
-void Gui::removeBinding(fgfx_handle_t handle)
+void Gui::removeBinding(tgfx_handle_t handle)
 {
     for (std::vector<NodeBinding *>::iterator it = bindings_.begin();
          it != bindings_.end(); ++it) {
@@ -1239,19 +1408,36 @@ void Gui::removeBinding(fgfx_handle_t handle)
     }
 }
 
-void Gui::removeBindingsRecursive(fgfx_handle_t handle)
+void Gui::removeBindingsRecursive(tgfx_handle_t handle)
 {
-    fgfx_handle_t child;
-    if (!ctx_ || handle == FGFX_INVALID_HANDLE) {
+    tgfx_handle_t child;
+    if (!ctx_ || handle == TGFX_INVALID_HANDLE) {
         return;
     }
-    child = fgfx_node_first_child(ctx_, handle);
-    while (child != FGFX_INVALID_HANDLE) {
-        fgfx_handle_t next = fgfx_node_next_sibling(ctx_, child);
+    child = tgfx_node_first_child(ctx_, handle);
+    while (child != TGFX_INVALID_HANDLE) {
+        tgfx_handle_t next = tgfx_node_next_sibling(ctx_, child);
         removeBindingsRecursive(child);
         child = next;
     }
     removeBinding(handle);
 }
 
-} // namespace famigfx
+void Gui::removeStaleBindings()
+{
+    if (!ctx_) {
+        return;
+    }
+    for (std::vector<NodeBinding *>::iterator it = bindings_.begin();
+         it != bindings_.end(); ) {
+        if ((*it)->handle == TGFX_INVALID_HANDLE ||
+            !tgfx_node_exists(ctx_, (*it)->handle)) {
+            delete *it;
+            it = bindings_.erase(it);
+        } else {
+            ++it;
+        }
+    }
+}
+
+} // namespace thingfx

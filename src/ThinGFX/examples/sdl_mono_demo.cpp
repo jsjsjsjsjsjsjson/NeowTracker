@@ -1,4 +1,4 @@
-#include "famigfx/FamiGFX.hpp"
+#include "thingfx/ThinGFX.hpp"
 
 #include <chrono>
 #include <stdio.h>
@@ -37,7 +37,7 @@ static uint32_t parse_frame_limit(const char *text)
 }
 
 typedef struct mono_node_data {
-    famigfx::Gui *gui;
+    thingfx::Gui *gui;
     const char *label;
     uint32_t frame;
     uint32_t key_hits;
@@ -87,8 +87,8 @@ static uint8_t parse_title_visible(const char *text)
     return 1;
 }
 
-static void draw_background(famigfx::Window &window, famigfx::FamiGFX &gfx,
-                            const famigfx::Rect &dirty, void *user)
+static void draw_background(thingfx::Window &window, thingfx::ThinGFX &gfx,
+                            const thingfx::Rect &dirty, void *user)
 {
     mono_node_data_t *data = static_cast<mono_node_data_t *>(user);
     int16_t w = gfx.width();
@@ -115,15 +115,15 @@ static void draw_background(famigfx::Window &window, famigfx::FamiGFX &gfx,
     }
 }
 
-static void draw_window(famigfx::Window &window, famigfx::FamiGFX &gfx,
-                        const famigfx::Rect &dirty, void *user)
+static void draw_window(thingfx::Window &window, thingfx::ThinGFX &gfx,
+                        const thingfx::Rect &dirty, void *user)
 {
     mono_node_data_t *data = static_cast<mono_node_data_t *>(user);
     int16_t w = gfx.width();
     int16_t h = gfx.height();
     int16_t ball_x = (int16_t)(12 + (data->frame % (uint32_t)(w > 36 ? w - 36 : 1)));
-    famigfx::Color black = 0;
-    famigfx::Color white = 255;
+    thingfx::Color black = 0;
+    thingfx::Color white = 255;
     bool focused = data->gui && data->gui->focus().handle() == window.handle();
     (void)dirty;
 
@@ -149,11 +149,11 @@ static void draw_window(famigfx::Window &window, famigfx::FamiGFX &gfx,
                    data->invert ? black : white);
 }
 
-static bool handle_mono_event(famigfx::Window &window, const famigfx::Event &event,
+static bool handle_mono_event(thingfx::Window &window, const thingfx::Event &event,
                               void *user)
 {
     mono_node_data_t *data = static_cast<mono_node_data_t *>(user);
-    if (event.type != famigfx::EventType::KeyDown) {
+    if (event.type != thingfx::EventType::KeyDown) {
         return false;
     }
 
@@ -180,7 +180,7 @@ static bool handle_mono_event(famigfx::Window &window, const famigfx::Event &eve
     case 'B':
         window.sendToBack();
         break;
-    case static_cast<uint32_t>(famigfx::Key::Enter):
+    case static_cast<uint32_t>(thingfx::Key::Enter):
     case ' ':
         data->invert = data->invert ? 0u : 1u;
         break;
@@ -200,19 +200,19 @@ int main(int argc, char **argv)
     uint8_t border_mode = argc > 4 ? parse_border_mode(argv[4]) : MONO_BORDER_RECT;
     uint8_t show_title = argc > 5 ? parse_title_visible(argv[5]) : 1;
     uint32_t frame_count = 0;
-    famigfx::PortConfig port_config;
-    port_config.title = "FamiGFX SDL Mono Demo";
+    thingfx::PortConfig port_config;
+    port_config.title = "ThinGFX SDL Mono Demo";
     port_config.scale = 4;
-    port_config.format = famigfx::PixelFormat::Mono1;
+    port_config.format = thingfx::PixelFormat::Mono1;
     port_config.autoStartDaemon = true;
-    famigfx::Gui gui(width, height, port_config);
-    famigfx::Window background;
-    famigfx::Window main_win;
-    famigfx::Window floating_win;
-    famigfx::WindowConfig config;
-    famigfx::WindowBorder border =
-        border_mode == MONO_BORDER_NONE ? famigfx::WindowBorder::None
-                                        : famigfx::WindowBorder::Rect;
+    thingfx::Gui gui(width, height, port_config);
+    thingfx::Window background;
+    thingfx::Window main_win;
+    thingfx::Window floating_win;
+    thingfx::WindowConfig config;
+    thingfx::WindowBorder border =
+        border_mode == MONO_BORDER_NONE ? thingfx::WindowBorder::None
+                                        : thingfx::WindowBorder::Rect;
     mono_node_data_t bg_data;
     mono_node_data_t main_data;
     mono_node_data_t float_data;
@@ -237,13 +237,13 @@ int main(int argc, char **argv)
     bg_data.key_hits = 0;
     bg_data.invert = 0;
 
-    config.kind = famigfx::NodeKind::Layer;
+    config.kind = thingfx::NodeKind::Layer;
     config.frame = {0, 0, (int16_t)width, (int16_t)height};
     config.opacity = 255;
     config.visible = true;
     config.ownsCanvas = false;
     config.showTitle = false;
-    config.border = famigfx::WindowBorder::None;
+    config.border = thingfx::WindowBorder::None;
     config.title = NULL;
     config.onDraw = draw_background;
     config.onEvent = NULL;
@@ -260,13 +260,13 @@ int main(int argc, char **argv)
     main_data.key_hits = 0;
     main_data.invert = 0;
 
-    config.kind = famigfx::NodeKind::Window;
+    config.kind = thingfx::NodeKind::Window;
     config.frame = {8, 18, (int16_t)(width > 24 ? width - 24 : width),
                     (int16_t)(height > 30 ? height - 30 : height)};
     config.opacity = 255;
     config.visible = true;
     config.ownsCanvas = true;
-    config.canvasFormat = famigfx::PixelFormat::Mono1;
+    config.canvasFormat = thingfx::PixelFormat::Mono1;
     config.showTitle = show_title != 0;
     config.border = border;
     config.title = show_title ? "MAIN" : NULL;
@@ -285,12 +285,12 @@ int main(int argc, char **argv)
     float_data.key_hits = 0;
     float_data.invert = 1;
 
-    config.kind = famigfx::NodeKind::Floating;
+    config.kind = thingfx::NodeKind::Floating;
     config.frame = {(int16_t)(width / 2 - 28), (int16_t)(height / 2 - 14), 56, 28};
     config.opacity = 255;
     config.visible = true;
     config.ownsCanvas = true;
-    config.canvasFormat = famigfx::PixelFormat::Mono1;
+    config.canvasFormat = thingfx::PixelFormat::Mono1;
     config.showTitle = show_title != 0;
     config.border = border;
     config.title = show_title ? "FLOAT" : NULL;
@@ -305,7 +305,7 @@ int main(int argc, char **argv)
 
     floating_win.focus();
     while (gui.pump()) {
-        famigfx::Rect float_rect;
+        thingfx::Rect float_rect;
         int16_t range = (int16_t)(width > 72 ? width - 72 : 1);
 
         bg_data.frame = frame_count;

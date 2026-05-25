@@ -1,11 +1,11 @@
-#ifndef FAMIGFX_FAMIGFX_HPP
-#define FAMIGFX_FAMIGFX_HPP
+#ifndef THINGFX_THINGFX_HPP
+#define THINGFX_THINGFX_HPP
 
 #include <stddef.h>
 #include <stdint.h>
 #include <vector>
 
-namespace famigfx {
+namespace thingfx {
 
 using Color = uint8_t;
 using Handle = uint32_t;
@@ -83,11 +83,29 @@ enum class AnimationCurve : uint8_t {
     EaseOut = 1
 };
 
+enum class Easing : uint8_t {
+    None = 0,
+    Linear = 1,
+    EaseIn = 2,
+    EaseOut = 3,
+    EaseInOut = 4,
+    SmoothStep = 5
+};
+
 struct Rect {
     int16_t x;
     int16_t y;
     int16_t w;
     int16_t h;
+};
+
+struct Transition {
+    Easing easing;
+    uint32_t durationMs;
+    float speed;
+
+    Transition(Easing e = Easing::None, uint32_t duration = 0, float speedScale = 1.0f)
+        : easing(e), durationMs(duration), speed(speedScale) {}
 };
 
 struct CanvasBuffer {
@@ -169,6 +187,11 @@ public:
     virtual void stopDaemon() {}
     virtual void notifyCommit() {}
     virtual bool waitCommit() { return false; }
+    virtual bool waitCommitTimeout(uint32_t timeoutMs)
+    {
+        (void)timeoutMs;
+        return waitCommit();
+    }
     virtual void lock() {}
     virtual void unlock() {}
 };
@@ -227,10 +250,10 @@ private:
     size_t printUnsigned(unsigned long value, int base);
 };
 
-class FamiGFX : public Print {
+class ThinGFX : public Print {
 public:
-    explicit FamiGFX(CanvasBuffer *canvas = 0);
-    virtual ~FamiGFX() {}
+    explicit ThinGFX(CanvasBuffer *canvas = 0);
+    virtual ~ThinGFX() {}
 
     CanvasBuffer *native() { return canvas_; }
     const CanvasBuffer *native() const { return canvas_; }
@@ -328,12 +351,12 @@ protected:
     const Font *font_;
 };
 
-class Canvas : public FamiGFX {
+class Canvas : public ThinGFX {
 public:
-    explicit Canvas(CanvasBuffer *canvas = 0) : FamiGFX(canvas) {}
+    explicit Canvas(CanvasBuffer *canvas = 0) : ThinGFX(canvas) {}
 };
 
-class OwnedCanvas : public FamiGFX {
+class OwnedCanvas : public ThinGFX {
 public:
     OwnedCanvas(uint16_t width, uint16_t height, PixelFormat format);
     ~OwnedCanvas();
@@ -346,7 +369,7 @@ public:
 
 class Window;
 
-using WindowDrawCallback = void (*)(Window &window, FamiGFX &gfx,
+using WindowDrawCallback = void (*)(Window &window, ThinGFX &gfx,
                                     const Rect &dirty, void *user);
 using WindowEventCallback = bool (*)(Window &window, const Event &event,
                                      void *user);
@@ -361,6 +384,9 @@ struct WindowConfig {
     bool showTitle = true;
     WindowBorder border = WindowBorder::Rect;
     const char *title = 0;
+    Transition transition;
+    Transition createTransition;
+    Transition destroyTransition;
     WindowDrawCallback onDraw = 0;
     WindowEventCallback onEvent = 0;
     void *user = 0;
@@ -376,6 +402,12 @@ public:
 
     Rect rect() const;
     bool setRect(const Rect &rect);
+    bool setRectImmediate(const Rect &rect);
+    bool setRectAnimated(const Rect &rect, const Transition &transition);
+    bool setTransition(const Transition &transition);
+    Transition transition() const;
+    bool setDestroyTransition(const Transition &transition);
+    Transition destroyTransition() const;
     bool setVisible(bool visible);
     bool setOpacity(uint8_t opacity);
     bool bringToFront();
@@ -390,6 +422,8 @@ public:
     bool invalidate();
     bool dispatch(const Event &event) const;
     bool destroy();
+    bool destroyImmediate();
+    bool destroyAnimated(const Transition &transition);
     Canvas canvas() const;
     Canvas back() const;
     Canvas draw() const;
@@ -443,7 +477,7 @@ public:
                            modifiers, target);
     }
     bool needsRender() const;
-    bool render(FamiGFX &target);
+    bool render(ThinGFX &target);
     bool render(CanvasBuffer *target);
     bool attachPort(Port *port);
     Port *port();
@@ -475,6 +509,7 @@ private:
     NodeBinding *bindingFor(Handle handle);
     void removeBinding(Handle handle);
     void removeBindingsRecursive(Handle handle);
+    void removeStaleBindings();
 
     detail::ContextState *ctx_;
     Port *owned_port_;
@@ -485,8 +520,8 @@ private:
     friend class Window;
 };
 
-using GFX = FamiGFX;
+using GFX = ThinGFX;
 
-} // namespace famigfx
+} // namespace thingfx
 
 #endif

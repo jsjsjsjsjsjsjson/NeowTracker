@@ -1,6 +1,6 @@
-#include "famigfx/FamiGFX.hpp"
+#include "thingfx/ThinGFX.hpp"
 
-namespace famigfx {
+namespace thingfx {
 
 const uint8_t Rismol3x5Bitmaps[] = {
   0x00,0x00,0x49,0x04,0xB4,0x00,0xBE,0xFA,0x5D,0x74,0x85,0x42,0x71,0xDE,0x48,0x00,
@@ -272,4 +272,4 @@ const Font *titleFont()
     return &Rismol3x5;
 }
 
-} // namespace famigfx
+} // namespace thingfx

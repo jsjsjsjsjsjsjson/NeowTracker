@@ -1,4 +1,4 @@
-#include "famigfx/FamiGFX.hpp"
+#include "thingfx/ThinGFX.hpp"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,13 +11,13 @@ static uint16_t parse_dimension(const char *text, uint16_t fallback)
     return (uint16_t)value;
 }
 
-static int write_pbm(const char *path, const famigfx::CanvasBuffer *canvas)
+static int write_pbm(const char *path, const thingfx::CanvasBuffer *canvas)
 {
     FILE *fp = fopen(path, "w");
     int16_t y;
     int16_t x;
     if (!fp) return -1;
-    famigfx::Canvas view(const_cast<famigfx::CanvasBuffer *>(canvas));
+    thingfx::Canvas view(const_cast<thingfx::CanvasBuffer *>(canvas));
     fprintf(fp, "P1\n%u %u\n", canvas->width, canvas->height);
     for (y = 0; y < (int16_t)canvas->height; ++y) {
         for (x = 0; x < (int16_t)canvas->width; ++x) {
@@ -35,28 +35,28 @@ int main(int argc, char **argv)
     uint16_t height = argc > 2 ? parse_dimension(argv[2], 64) : 64;
     const char *out_path = argc > 3 ? argv[3] : "mono_demo.pbm";
 
-    famigfx::Gui gui(width, height);
-    famigfx::OwnedCanvas output(width, height, famigfx::PixelFormat::Mono1);
+    thingfx::Gui gui(width, height);
+    thingfx::OwnedCanvas output(width, height, thingfx::PixelFormat::Mono1);
     if (!gui.valid() || !output.valid()) {
         fprintf(stderr, "failed to allocate mono demo %ux%u\n", width, height);
         return 1;
     }
 
-    famigfx::WindowConfig cfg;
-    cfg.kind = famigfx::NodeKind::Layer;
+    thingfx::WindowConfig cfg;
+    cfg.kind = thingfx::NodeKind::Layer;
     cfg.frame = {0, 0, (int16_t)width, (int16_t)height};
     cfg.ownsCanvas = true;
-    cfg.canvasFormat = famigfx::PixelFormat::Mono1;
+    cfg.canvasFormat = thingfx::PixelFormat::Mono1;
     cfg.showTitle = false;
-    cfg.border = famigfx::WindowBorder::None;
+    cfg.border = thingfx::WindowBorder::None;
 
-    famigfx::Window panel = gui.createLayer(cfg);
+    thingfx::Window panel = gui.createLayer(cfg);
     if (!panel.valid()) {
         fprintf(stderr, "failed to create mono panel\n");
         return 1;
     }
 
-    famigfx::Canvas gfx = panel.draw();
+    thingfx::Canvas gfx = panel.draw();
     gfx.fillScreen(0);
     gfx.drawRect(0, 0, gfx.width(), gfx.height(), 255);
     gfx.setCursor(6, 6);
@@ -74,6 +74,6 @@ int main(int argc, char **argv)
 
     printf("mono demo rendered %ux%u to %s (%zu bytes output buffer)\n",
            width, height, out_path,
-           famigfx::framebufferBytes(width, height, famigfx::PixelFormat::Mono1));
+           thingfx::framebufferBytes(width, height, thingfx::PixelFormat::Mono1));
     return 0;
 }

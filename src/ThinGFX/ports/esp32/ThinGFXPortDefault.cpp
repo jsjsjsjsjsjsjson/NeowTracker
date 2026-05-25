@@ -1,4 +1,4 @@
-#include "../../src/FamiGFXInternal.hpp"
+#include "../../src/ThinGFXInternal.hpp"
 
 #include "esp_lcd_panel_ops.h"
 #include "freertos/FreeRTOS.h"
@@ -7,7 +7,7 @@
 
 #include <stdlib.h>
 
-namespace famigfx {
+namespace thingfx {
 using namespace detail;
 
 class ESP32SSD1306DefaultPort : public Port {
@@ -44,7 +44,7 @@ public:
         size_t bytes = framebufferBytes(width, height, PixelFormat::Mono1);
         state_->target_pixels = static_cast<uint8_t *>(calloc(1, bytes));
         if (!state_->lock || !state_->commit_sem || !state_->target_pixels) return;
-        fgfx_canvas_wrap(&target, width, height, width, PixelFormat::Mono1,
+        tgfx_canvas_wrap(&target, width, height, width, PixelFormat::Mono1,
                          state_->target_pixels);
     }
 
@@ -83,7 +83,7 @@ public:
         state_->entry = entry;
         state_->entry_arg = arg;
         state_->daemon_stop = false;
-        BaseType_t ok = xTaskCreate(daemonTrampoline, "famigfx",
+        BaseType_t ok = xTaskCreate(daemonTrampoline, "thingfx",
                                     state_->daemon_stack_bytes,
                                     state_, state_->daemon_priority,
                                     &state_->daemon_task);
@@ -107,6 +107,13 @@ public:
     {
         if (!state_ || !state_->commit_sem) return false;
         xSemaphoreTake(state_->commit_sem, portMAX_DELAY);
+        return !state_->daemon_stop;
+    }
+
+    bool waitCommitTimeout(uint32_t timeoutMs) override
+    {
+        if (!state_ || !state_->commit_sem) return false;
+        xSemaphoreTake(state_->commit_sem, pdMS_TO_TICKS(timeoutMs));
         return !state_->daemon_stop;
     }
 
@@ -143,4 +150,4 @@ void destroyDefaultPort(Port *port)
     delete port;
 }
 
-} // namespace famigfx
+} // namespace thingfx
